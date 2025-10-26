@@ -5,7 +5,6 @@ from database.models_db import User
 from services.userservice import UserService
 from utils.auth import verify_token
 from utils.logger_config import admin_logger
-from utils.permissions import ROLE_PERMISSIONS
 
 security = HTTPBearer()
 
@@ -36,8 +35,8 @@ async def require_admin(user: User = Depends(get_current_user)):
     # Получаем объект роли пользователя из БД
     user_role = await UserService.get_role_user(user.email)
     admin_logger.info(f"user_role: {user_role}, {type(user_role)}")
-
+    admin_logger.info(f"user_role: {user_role} == {'admin'}, {user_role.role == 'admin'}")
     if user_role.role != "admin":
         raise HTTPException(status_code=403, detail="Требуются права администратора")
-    admin_logger.info(f"Роль пользователя {user.email}: {user_role.role}")
+    admin_logger.info(f"Роль пользователя {user.email}: {user_role}")
     return user

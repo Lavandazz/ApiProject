@@ -25,3 +25,7 @@ class UserResponseSchema(BaseModel):
     message: str
     user: UserProfileSchema
 
+
+class ArticleUpdateSchema(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None

@@ -4,10 +4,8 @@ from utils.logger_config import reg_logger, db_logger
 
 class UserService:
     @staticmethod
-    async def create_user(username, name, surname, patronymic, email, password, role_name="user"):
+    async def create_user(username, name, surname, patronymic, email, password, role_name="user") -> User:
         try:
-            db_logger.info(f"начинаю регистрацию {name, surname}")
-
             user = await User.create(
                 username=username,
                 name=name,
@@ -16,20 +14,16 @@ class UserService:
                 email=email,
                 password=password
             )
-            db_logger.info(f"Новый пользователь зарегистрирован {user}")
             # создаем роль если не существует
             role = await Role.get_or_none(role=role_name)
 
             if not role:
                 role = await Role.create(role=role_name)
-                db_logger.info(f"Создана новая роль: {role_name}")
-
-            db_logger.info(f"регистрирую пользователя с ролью: {role}")
 
             # Связываем пользователя с ролью
             await UserRole.create(user=user, role=role)
 
-            db_logger.info(f"Пользователь {name} создан с ролью {role_name}")
+            db_logger.info(f"Зарегистрирован новый пользователь {email} с ролью {role_name}")
             return user
 
         except Exception as e:
@@ -38,7 +32,7 @@ class UserService:
     @staticmethod
     async def get_user(email) -> User | None:
         """
-        Проверяем есть ли юзер в базе по полю email
+        Проверяем есть ли юзер в базе по уникальному полю email
         :param email:
         :return:
         """
@@ -51,11 +45,11 @@ class UserService:
             reg_logger.error(f"Пользователя нет в базе {e}")
 
     @staticmethod
-    async def get_role_user(email: str) -> str:
+    async def get_role_user(email: str) -> Role:
         """
-        Возврат роли пользователя
+        Отображение роли пользователя
         :param email:
-        :return: role: str
+        :return: role: объект модели Role
         """
         try:
             user = await User.get_or_none(email=email)
@@ -69,29 +63,13 @@ class UserService:
     @staticmethod
     async def delete_user(email):
         """
-        Пометка на удаление
+        Мягкое удаление. Помечает пользователя как неактивный
         :param email:
         :return:
         """
         try:
             await User.filter(email=email).update(is_active=False)
             db_logger.info(f"Пользователь {email} удалил аккаунт")
+
         except Exception as e:
             db_logger.error(f"Неудачная попытка удалить аккаунт: {email}. {e}")
-
-
-class AdminService(UserService):
-    @staticmethod
-    async def change_role(email: str, new_role: str):
-        role = await Role.get_or_none(role=new_role)
-        user = await User.filter(email=email).first()
-
-        user_role, created = await UserRole.update_or_create(
-            user_id=user.id,
-            defaults={'role_id': role.id}
-        )
-        action = "назначена" if created else "изменена на"
-        db_logger.info(f"Пользователю {user.email} {action} роль {new_role}")
-
-        return user
-

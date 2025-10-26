@@ -4,7 +4,7 @@ from fastapi import Depends, Form, HTTPException, APIRouter
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from database.models_db import User
-from models.schemas import UserUpdateSchema, UserProfileSchema, UserResponseSchema
+from models.schemas import UserUpdateSchema, UserResponseSchema
 from routers.verification import get_current_user
 from services.token_service import TokenService
 from services.userservice import UserService
@@ -59,6 +59,7 @@ async def update_profile(update_data: UserUpdateSchema,
 async def delete_profile(password: str,
                          user: User = Depends(get_current_user),
                          credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
+    """Мягкое удаление пользователя"""
     if not verify_password(password, user.password):
         raise HTTPException(status_code=400, detail="Неверный пароль")
 
