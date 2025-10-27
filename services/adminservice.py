@@ -4,6 +4,17 @@ from utils.logger_config import db_logger
 
 
 class AdminService(UserService):
+
+    @staticmethod
+    async def get_all_users():
+        try:
+            users = await User.all()
+
+            return users
+
+        except Exception as e:
+            db_logger.error(f"Ошибка получения пользователей: {e}")
+
     @staticmethod
     async def change_user_role_by_id(user_id: int, new_role: str):
         """
@@ -24,6 +35,7 @@ class AdminService(UserService):
             db_logger.info(f"Пользователю {user.email} {action} роль {new_role}")
 
             return user
+
         except Exception as e:
             db_logger.error(e)
 
@@ -34,6 +46,7 @@ class AdminService(UserService):
             user = await User.filter(id=user_id).first()
             db_logger.info(f"user: {user}")
             user.is_active = True
+
             await user.save()
 
             return user

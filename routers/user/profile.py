@@ -1,6 +1,4 @@
-from typing import Optional
-
-from fastapi import Depends, Form, HTTPException, APIRouter
+from fastapi import Depends, HTTPException, APIRouter
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from database.models_db import User
@@ -68,5 +66,7 @@ async def delete_profile(password: str,
     # Удаляем сессию и добавляем токен в черный лист
     token = credentials.credentials
     await TokenService.blacklist_token_saver(token=token)
+
+    profile_logger.info(f"Пользователь {user.email} удалил свой аккаунт")
 
     return {"message": "Аккаунт удалён"}

@@ -1,10 +1,10 @@
 from database.models_db import User, Role, UserRole
-from utils.logger_config import reg_logger, db_logger
+from utils.logger_config import db_logger
 
 
 class UserService:
     @staticmethod
-    async def create_user(username, name, surname, patronymic, email, password, role_name="user") -> User:
+    async def create_user(username, name, surname, patronymic, email, password, role_name="user") -> User | None:
         try:
             user = await User.create(
                 username=username,
@@ -22,27 +22,42 @@ class UserService:
 
             # Связываем пользователя с ролью
             await UserRole.create(user=user, role=role)
-
-            db_logger.info(f"Зарегистрирован новый пользователь {email} с ролью {role_name}")
-            return user
+            if user:
+                return user
 
         except Exception as e:
-            db_logger.error(e)
+            db_logger.error(f"Ошибка при регистрации нового пользователя: {e}")
 
     @staticmethod
-    async def get_user(email) -> User | None:
+    async def get_user(email: str) -> User | None:
         """
         Проверяем есть ли юзер в базе по уникальному полю email
         :param email:
         :return:
         """
         try:
-            user = await User.get_or_none(email=email)
-            if user:
-                return user
+            if email:
+                user = await User.get_or_none(email=email)
+                if user:
+                    return user
 
         except Exception as e:
-            reg_logger.error(f"Пользователя нет в базе {e}")
+            db_logger.error(f"Пользователя нет в базе {e}")
+
+    @staticmethod
+    async def get_username(username: str) -> User | None:
+        """
+        Проверяем есть ли юзер в базе по уникальному полю username
+
+        """
+        try:
+            if username:
+                user = await User.get_or_none(username=username)
+                if user:
+                    return user
+
+        except Exception as e:
+            db_logger.error(f"Пользователя нет в базе {e}")
 
     @staticmethod
     async def get_role_user(email: str) -> Role:
@@ -58,7 +73,7 @@ class UserService:
                 return user_role.role
 
         except Exception as e:
-            reg_logger.error(f"Не удалось получить роль пользователя {e}")
+            db_logger.error(f"Не удалось получить роль пользователя {e}")
 
     @staticmethod
     async def delete_user(email):
@@ -69,7 +84,6 @@ class UserService:
         """
         try:
             await User.filter(email=email).update(is_active=False)
-            db_logger.info(f"Пользователь {email} удалил аккаунт")
 
         except Exception as e:
             db_logger.error(f"Неудачная попытка удалить аккаунт: {email}. {e}")

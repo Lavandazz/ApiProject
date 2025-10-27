@@ -30,19 +30,27 @@ async def register_user(
     if password != second_password:
         raise HTTPException(status_code=400, detail="Пароли не совпадают")
 
-    user = await UserService.get_user(email)
+    # Проверяем существование в базе email и username
+    user = await UserService.get_user(email=email)
+    search_username = await UserService.get_username(username=username)
+
     if user:
-        raise HTTPException(status_code=400, detail="Пользователь с таким именем уже существует")
+        raise HTTPException(status_code=400, detail="Пользователь уже существует")
+
+    elif search_username:
+        raise HTTPException(status_code=400, detail="Пользователь с таким ником существует")
 
     else:
-        hashed_password = hash_password(password)  # хешируем пароль
+        hashed_password = hash_password(password)  # хэш пароля
 
         # Сохраняем в бд
         await UserService.create_user(
             username=username, name=name, surname=surname, patronymic=patronymic, email=email, password=hashed_password
         )
 
-        return {"message": "Пользователь зарегистрирован"}
+        reg_logger.info(f"Зарегистрирован новый пользователь")
+
+        return {"message": "Пользователь зарегистрирован", "user": user}
 
 
 @router.post("/login", tags=["auth"])
@@ -83,9 +91,8 @@ async def login(
 @router.post("/logout", tags=["auth"])
 async def logout(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
                  user: User = Depends(get_current_user)):
-    """Выход из системы - инвалидация токена"""
+    """Выход из системы - добавление токена в черный список и деактивация"""
     token = credentials.credentials
-    # добавляем токен в блеклист
     await TokenService.blacklist_token_saver(token=token)
 
     return {"message": "Успешный выход из системы"}

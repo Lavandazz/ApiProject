@@ -7,7 +7,9 @@ class ArticleService:
     async def get_articles():
         try:
             articles = await Article.all()
+
             return articles
+
         except Exception as e:
             db_logger.error(f"Ошибка получения всех постов: {e}")
 
@@ -17,7 +19,9 @@ class ArticleService:
             articles = await Article.filter(author=author).all()
             if not articles:
                 return None
+
             return articles
+
         except Exception as e:
             db_logger.error(f"Ошибка получения всех постов пользователя: {e}")
 
@@ -26,7 +30,9 @@ class ArticleService:
         """Получение поста по ID"""
         try:
             article = await Article.get_or_none(id=article_id)
+
             return article
+
         except Exception as e:
             db_logger.error(f"Ошибка получения поста {article_id}: {e}")
 
@@ -41,6 +47,7 @@ class ArticleService:
                                            description=description,
                                            author=author)
             return article
+
         except Exception as e:
             db_logger.error(f"Ошибка сохранения поста: {e}")
 
@@ -62,6 +69,7 @@ class ArticleService:
                     setattr(article, key, value)
 
             await article.save()
+
             return article
 
         except Exception as e:
@@ -72,6 +80,7 @@ class ArticleService:
         try:
             article = await Article.get_or_none(id=article_id)
             await article.delete()
+
             return True
 
         except Exception as e:

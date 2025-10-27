@@ -12,8 +12,8 @@ class TokenService:
         :return:
         """
         try:
-            db_logger.info(f"token = {token}, type = {type(token)}")
             await BlacklistedToken.create(token=token)
+
         except Exception as e:
             db_logger.exception(f"не удалось сохранить токен в бд: {e}")
 
